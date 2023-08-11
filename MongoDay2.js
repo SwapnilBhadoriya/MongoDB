@@ -577,3 +577,79 @@ db.persons.find();
 //     NumberOfPlayers: 12
 //   }
 // ]
+
+db.persons.aggregate([
+  { $match: { "dob.age": { $gt: 50 } } },
+  {
+    $group: {
+      _id: "$gender",
+      count: { $count: {} },
+      average_age: { $avg: "$dob.age" },
+    },
+  },
+  { $sort: { count: -1 } },
+]);
+// [
+//   { _id: 'male', count: 1079, average_age: 62.066728452270624 },
+//   { _id: 'female', count: 1125, average_age: 61.90577777777778 }
+// ]
+
+db.persons
+  .aggregate([
+    { $match: { "dob.age": { $gt: 50 } } },
+    {
+      $group: {
+        _id: { gender: "$gender" },
+        numPersons: { $sum: 1 },
+        avgAge: { $avg: "$dob.age" },
+      },
+    },
+    { $sort: { numPersons: -1 } },
+  ])
+  .pretty();
+// [
+//   {
+//     _id: { gender: 'female' },
+//     numPersons: 1125,
+//     avgAge: 61.90577777777778
+//   },
+//   {
+//     _id: { gender: 'male' },
+//     numPersons: 1079,
+//     avgAge: 62.066728452270624
+//   }
+// ]
+
+db.persons.aggregate([
+  {
+    $project: {
+      email: 1,
+      DOB: {
+        $dateToString: {
+          format: "%Y-%m-%d",
+          date: { $convert: { input: "$dob.date", to: "date" } },
+        },
+      },
+    },
+  },
+  {
+    $limit: 3,
+  },
+]);
+// [
+//   {
+//     _id: ObjectId("64d471dfdb0e222f863b0fe7"),
+//     email: 'victor.pedersen@example.com',
+//     DOB: '1959-02-19'
+//   },
+//   {
+//     _id: ObjectId("64d471dfdb0e222f863b0fe8"),
+//     email: 'gideon.vandrongelen@example.com',
+//     DOB: '1971-03-28'
+//   },
+//   {
+//     _id: ObjectId("64d471dfdb0e222f863b0fe9"),
+//     email: 'پریا.پارسا@example.com',
+//     DOB: '1962-01-10'
+//   }
+// ]
